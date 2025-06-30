@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proje Planlama - Gelişmiş Gantt</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>Proje Planlama - Gelişmiş Gantt</h1>
+    
+    <div class="controls-container">
+        <div class="controls-left">
+            <button id="add-task-main-btn">Yeni Görev Ekle</button>
+            <div class="dropdown-wrapper">
+                <button class="control-btn" id="import-btn">İçe Aktar</button>
+                <div class="dropdown-menu" id="import-menu">
+                    <a href="#" data-action="import-excel">Excel'den Aktar</a>
+                    <a href="#" data-action="import-primavera">Primavera (XER) Aktar</a>
+                </div>
+            </div>
+            <div class="dropdown-wrapper">
+                <button class="control-btn" id="export-btn">Dışa Aktar</button>
+                <div class="dropdown-menu" id="export-menu">
+                    <a href="#" data-action="export-png">PNG Olarak Aktar</a>
+                    <a href="#" data-action="export-pdf">PDF Olarak Aktar</a>
+                    <a href="#" data-action="export-excel">Excel Olarak Aktar</a>
+                    <a href="#" data-action="export-primavera">Primavera (XER) Olarak Aktar</a>
+                </div>
+            </div>
+        </div>
+        <div class="view-zoom-controls">
+            <div class="view-mode-controls" id="view-mode-controls">
+                 <button data-mode="day" class="active">Gün</button>
+                 <button data-mode="week">Hafta</button>
+                 <button data-mode="month">Ay</button>
+                 <button data-mode="quarter">Çeyrek</button>
+                 <button data-mode="year">Yıl</button>
+            </div>
+             <div class="zoom-controls">
+                <button id="zoom-out-btn" title="Uzaklaştır">-</button>
+                <button id="zoom-in-btn" title="Yakınlaştır">+</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+             <div class="modal-header">
+                <h3 id="modal-title">Yeni Görev</h3>
+                <div>
+                     <button id="save-task-btn" class="modal-done-btn">Bitti</button>
+                     <span class="close-btn">&times;</span>
+                </div>
+            </div>
+            <div class="modal-body">
+                <form id="task-form" novalidate>
+                    <input type="hidden" id="task-id">
+                    
+                    <div class="form-group form-group-full">
+                        <label for="task-name">Başlık</label>
+                        <input type="text" id="task-name" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                             <label for="task-type">Tip</label>
+                             <select id="task-type">
+                                 <option value="task">Görev</option>
+                                 <option value="milestone">Kilometre Taşı</option>
+                             </select>
+                        </div>
+                         <div class="form-group">
+                            <label for="parent-task">Üst Görev</label>
+                            <select id="parent-task">
+                                <option value="0">Ana Görev (Parent Yok)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                     <div class="form-row">
+                        <div class="form-group">
+                            <label for="start-date">Başlangıç Tarihi</label>
+                            <input type="date" id="start-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="end-date">Bitiş Tarihi</label>
+                            <input type="date" id="end-date" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="task-duration">Süre</label>
+                            <div class="duration-group">
+                               <input type="number" id="task-duration" min="0" step="1">
+                               <span>gün</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="task-progress">İlerleme</label>
+                             <div class="progress-group">
+                                <input type="range" id="task-progress" min="0" max="100" value="0">
+                                <span id="progress-value">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                     
+                    <div class="form-group form-group-full">
+                        <label for="assigned-to-wrapper">Atanan</label>
+                        <div id="assigned-to-wrapper" class="assigned-to-wrapper">
+                            <div id="assigned-to-display" class="assigned-to-display" tabindex="0">
+                                <!-- Selected users will be displayed here -->
+                            </div>
+                            <div id="assigned-to-dropdown" class="assigned-to-dropdown">
+                                <!-- Personnel list will be populated here by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label for="predecessor-list">Öncüller (Predecessors) - Bu görevden önce bitmesi gerekenler</label>
+                        <div id="predecessor-list"></div>
+                        <button type="button" id="add-predecessor-btn">+ Öncül Ekle</button>
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label for="successor-list">Ardıllar (Successors) - Bu görevi bekleyenler</label>
+                        <div id="successor-list"></div>
+                        <button type="button" id="add-successor-btn">+ Ardıl Ekle</button>
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label for="task-notes">Notlar</label>
+                        <textarea id="task-notes" rows="3"></textarea>
+                    </div>
+
+                </form>
+             </div>
+             <div class="modal-footer">
+                <button type="button" id="delete-task-btn" style="background-color: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">Görevi Sil</button>
+                <button type="button" id="clear-data" style="background-color: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">Verileri Sıfırla</button>
+             </div>
+        </div>
+    </div>
+
+    <div class="schedule-container" id="schedule-container">
+        <div class="grid-header" id="grid-header">
+            <div class="grid-cell col-add"></div>
+            <div class="grid-cell col-wbs">WBS<div class="column-resizer"></div></div>
+            <div class="grid-cell col-name">Görev Adı<div class="column-resizer"></div></div>
+            <div class="grid-cell col-duration">Süre<div class="column-resizer"></div></div>
+            <div class="grid-cell col-start-date">Başlangıç<div class="column-resizer"></div></div>
+            <div class="grid-cell col-end-date">Bitiş<div class="column-resizer"></div></div>
+            <div class="grid-cell col-assigned">Atanan<div class="column-resizer"></div></div>
+            <div class="grid-cell col-progress">İlerleme</div>
+        </div>
+        <div class="gantt-header-container" id="gantt-header-container">
+            <div id="gantt-header-major" class="gantt-header-major"></div>
+            <div id="gantt-header-minor" class="gantt-header-minor"></div>
+        </div>
+        <div class="grid-body-container" id="grid-body-container">
+            <div class="grid-rows-wrapper" id="grid-rows-wrapper"></div>
+        </div>
+        <div class="gantt-body-container" id="gantt-body-container">
+            <div class="gantt-content-wrapper" id="gantt-content-wrapper">
+                 <div class="gantt-grid-lines" id="gantt-grid-lines"></div>
+                 <div class="gantt-bars-area" id="gantt-bars-area"></div>
+                 <svg id="gantt-connectors" class="gantt-connector-layer"></svg>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js" defer></script>
+    <script src="script.js" defer></script>
+
+</body>
+</html>
